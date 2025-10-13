@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impersonation Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .code {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Impersonation Fix Test Tool</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Issue Summary</h2>
+        <p><strong>Problem:</strong> The impersonation system shows "No valid impersonation session found" because the admin panel is not storing data in the cache properly.</p>
+        <p><strong>Root Cause:</strong> There are two different impersonation systems running in parallel, and the admin panel is using the old system that expects different cache data structure.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test 1: Check Current Impersonation Key</h2>
+        <p>Test the current impersonation key from your URL.</p>
+        <input type="text" id="impersonationKey" placeholder="Enter impersonation key from URL" value="impersonation_b4c04bca8e6bf5647c9e79f91db085aa4887c229e7d5af92c37d6dae5997aa14">
+        <button onclick="testCurrentKey()">Test Current Key</button>
+        <div id="currentKeyResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Test 2: Store Test Data</h2>
+        <p>Manually store test impersonation data in the cache to test the flow.</p>
+        <input type="text" id="testKey" placeholder="Test impersonation key" value="test_impersonation_key_123">
+        <input type="text" id="testRestaurantUid" placeholder="Restaurant UID" value="test_restaurant_uid">
+        <input type="text" id="testRestaurantName" placeholder="Restaurant Name" value="Test Restaurant">
+        <input type="text" id="testToken" placeholder="Test Token" value="test_firebase_token">
+        <button onclick="storeTestData()">Store Test Data</button>
+        <div id="storeTestResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 Test 3: Test Full Flow</h2>
+        <p>Test the complete impersonation flow with the test data.</p>
+        <button onclick="testFullFlow()">Test Full Flow</button>
+        <div id="fullFlowResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Test 4: Generate Test URL</h2>
+        <p>Generate a test URL to manually test the impersonation flow.</p>
+        <button onclick="generateTestUrl()">Generate Test URL</button>
+        <div id="testUrlResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results Summary</h2>
+        <div id="summaryResult"></div>
+    </div>
+
+    <script>
+        let testResults = {
+            currentKey: false,
+            storeTest: false,
+            fullFlow: false,
+            testUrl: false
+        };
+
+        function testCurrentKey() {
+            const resultDiv = document.getElementById('currentKeyResult');
+            const impersonationKey = document.getElementById('impersonationKey').value;
+            
+            resultDiv.innerHTML = '<p>Testing current impersonation key...</p>';
+            
+            fetch(`http://127.0.0.1:8001/api/check-impersonation?impersonation_key=${encodeURIComponent(impersonationKey)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_impersonation) {
+                        testResults.currentKey = true;
+                        resultDiv.innerHTML = '<div class="success"><strong>✅ Current Key Test Passed</strong><br>Impersonation data found in cache.</div>';
+                    } else {
+                        resultDiv.innerHTML = '<div class="error"><strong>❌ Current Key Test Failed</strong><br>No impersonation data found in cache. This confirms the issue.</div>';
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<div class="error"><strong>❌ Current Key Test Failed</strong><br>Error: ${error.message}</div>`;
+                });
+        }
+
+        function storeTestData() {
+            const resultDiv = document.getElementById('storeTestResult');
+            const testKey = document.getElementById('testKey').value;
+            const restaurantUid = document.getElementById('testRestaurantUid').value;
+            const restaurantName = document.getElementById('testRestaurantName').value;
+            const token = document.getElementById('testToken').value;
+            
+            resultDiv.innerHTML = '<p>Storing test data...</p>';
+            
+            fetch('http://127.0.0.1:8001/api/debug-store-impersonation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': 'test-token' // You might need to get the actual CSRF token
+                },
+                body: JSON.stringify({
+                    impersonation_key: testKey,
+                    restaurant_uid: restaurantUid,
+                    restaurant_name: restaurantName,
+                    token: token
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    testResults.storeTest = true;
+                    resultDiv.innerHTML = '<div class="success"><strong>✅ Store Test Data Passed</strong><br>Test data stored successfully in cache.</div>';
+                } else {
+                    resultDiv.innerHTML = `<div class="error"><strong>❌ Store Test Data Failed</strong><br>Error: ${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<div class="error"><strong>❌ Store Test Data Failed</strong><br>Error: ${error.message}</div>`;
+            });
+        }
+
+        function testFullFlow() {
+            const resultDiv = document.getElementById('fullFlowResult');
+            const testKey = document.getElementById('testKey').value;
+            
+            resultDiv.innerHTML = '<p>Testing full flow...</p>';
+            
+            // First check if the test data exists
+            fetch(`http://127.0.0.1:8001/api/check-impersonation?impersonation_key=${encodeURIComponent(testKey)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_impersonation) {
+                        testResults.fullFlow = true;
+                        resultDiv.innerHTML = '<div class="success"><strong>✅ Full Flow Test Passed</strong><br>Test data found and impersonation flow should work.</div>';
+                    } else {
+                        resultDiv.innerHTML = '<div class="error"><strong>❌ Full Flow Test Failed</strong><br>Test data not found. Make sure to run Test 2 first.</div>';
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<div class="error"><strong>❌ Full Flow Test Failed</strong><br>Error: ${error.message}</div>`;
+                });
+        }
+
+        function generateTestUrl() {
+            const resultDiv = document.getElementById('testUrlResult');
+            const testKey = document.getElementById('testKey').value;
+            
+            const testUrl = `http://127.0.0.1:8001/login?impersonation_key=${encodeURIComponent(testKey)}`;
+            
+            testResults.testUrl = true;
+            resultDiv.innerHTML = `
+                <div class="success">
+                    <strong>✅ Test URL Generated</strong><br>
+                    <a href="${testUrl}" target="_blank">${testUrl}</a><br>
+                    <button onclick="copyToClipboard('${testUrl}')">Copy URL</button>
+                </div>
+            `;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('URL copied to clipboard!');
+            });
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summaryResult');
+            const passed = Object.values(testResults).filter(result => result).length;
+            const total = Object.keys(testResults).length;
+            
+            let summaryHTML = `<h3>Test Results: ${passed}/${total} tests passed</h3>`;
+            
+            if (passed === total) {
+                summaryHTML += '<div class="success"><strong>🎉 All Tests Passed!</strong><br>The impersonation system is working correctly.</div>';
+            } else {
+                summaryHTML += '<div class="error"><strong>⚠️ Some Tests Failed</strong><br>Please check the failed tests above.</div>';
+            }
+            
+            summaryHTML += '<h4>Next Steps:</h4><ul>';
+            summaryHTML += '<li>If Test 1 fails: The admin panel is not storing data properly</li>';
+            summaryHTML += '<li>If Test 2 passes: The restaurant panel can store and retrieve data</li>';
+            summaryHTML += '<li>If Test 3 passes: The full flow works with test data</li>';
+            summaryHTML += '<li>Use Test 4 to manually test the impersonation flow</li>';
+            summaryHTML += '</ul>';
+            
+            summaryDiv.innerHTML = summaryHTML;
+        }
+
+        // Update summary when tests are run
+        setInterval(updateSummary, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impersonation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .code {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Impersonation System Test</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Test Instructions</h2>
+        <p>This test will help you verify that the impersonation system is working correctly.</p>
+        <ol>
+            <li>Make sure your admin panel is running on port 8000</li>
+            <li>Make sure your restaurant panel is running on port 8001</li>
+            <li>Click the test buttons below to verify each component</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test 1: Firebase Loading</h2>
+        <p>Test if Firebase is properly loaded on the restaurant panel login page.</p>
+        <button onclick="testFirebaseLoading()">Test Firebase Loading</button>
+        <div id="firebase-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Test 2: Impersonation URL Generation</h2>
+        <p>Test if the admin panel can generate proper impersonation URLs.</p>
+        <button onclick="testImpersonationURL()">Test URL Generation</button>
+        <div id="url-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 Test 3: Full Impersonation Flow</h2>
+        <p>Test the complete impersonation flow from admin panel to restaurant dashboard.</p>
+        <button onclick="testFullFlow()">Test Full Flow</button>
+        <div id="flow-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Test Results Summary</h2>
+        <div id="summary-result"></div>
+    </div>
+
+    <script>
+        let testResults = {
+            firebase: false,
+            urlGeneration: false,
+            fullFlow: false
+        };
+
+        function testFirebaseLoading() {
+            const resultDiv = document.getElementById('firebase-result');
+            resultDiv.innerHTML = '<p>Testing Firebase loading...</p>';
+            
+            // Test if we can access the restaurant panel login page
+            fetch('http://127.0.0.1:8001/login')
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    }
+                    throw new Error('Restaurant panel not accessible');
+                })
+                .then(html => {
+                    // Check if Firebase scripts are included
+                    if (html.includes('firebase-app-compat.js') && html.includes('firebase.initializeApp')) {
+                        testResults.firebase = true;
+                        resultDiv.innerHTML = '<div class="success"><strong>✅ Firebase Loading Test Passed</strong><br>Firebase scripts are properly loaded on the restaurant panel login page.</div>';
+                    } else {
+                        resultDiv.innerHTML = '<div class="error"><strong>❌ Firebase Loading Test Failed</strong><br>Firebase scripts are not properly loaded.</div>';
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<div class="error"><strong>❌ Firebase Loading Test Failed</strong><br>Error: ${error.message}</div>`;
+                });
+        }
+
+        function testImpersonationURL() {
+            const resultDiv = document.getElementById('url-result');
+            resultDiv.innerHTML = '<p>Testing impersonation URL generation...</p>';
+            
+            // Test if admin panel is accessible
+            fetch('http://127.0.0.1:8000/restaurants')
+                .then(response => {
+                    if (response.ok) {
+                        testResults.urlGeneration = true;
+                        resultDiv.innerHTML = '<div class="success"><strong>✅ URL Generation Test Passed</strong><br>Admin panel is accessible and should be able to generate impersonation URLs.</div>';
+                    } else {
+                        throw new Error('Admin panel not accessible');
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<div class="error"><strong>❌ URL Generation Test Failed</strong><br>Error: ${error.message}</div>`;
+                });
+        }
+
+        function testFullFlow() {
+            const resultDiv = document.getElementById('flow-result');
+            resultDiv.innerHTML = '<p>Testing full impersonation flow...</p>';
+            
+            // Test if the impersonation API endpoints are accessible
+            fetch('http://127.0.0.1:8001/api/check-impersonation')
+                .then(response => {
+                    if (response.ok) {
+                        testResults.fullFlow = true;
+                        resultDiv.innerHTML = '<div class="success"><strong>✅ Full Flow Test Passed</strong><br>Impersonation API endpoints are accessible.</div>';
+                    } else {
+                        throw new Error('Impersonation API not accessible');
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<div class="error"><strong>❌ Full Flow Test Failed</strong><br>Error: ${error.message}</div>`;
+                });
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary-result');
+            const passed = Object.values(testResults).filter(result => result).length;
+            const total = Object.keys(testResults).length;
+            
+            let summaryHTML = `<h3>Test Results: ${passed}/${total} tests passed</h3>`;
+            
+            if (passed === total) {
+                summaryHTML += '<div class="success"><strong>🎉 All Tests Passed!</strong><br>Your impersonation system is working correctly.</div>';
+            } else {
+                summaryHTML += '<div class="error"><strong>⚠️ Some Tests Failed</strong><br>Please check the failed tests above and fix the issues.</div>';
+            }
+            
+            summaryHTML += '<h4>Next Steps:</h4><ul>';
+            summaryHTML += '<li>If all tests pass, try the actual impersonation flow from the admin panel</li>';
+            summaryHTML += '<li>If tests fail, check the error messages and fix the issues</li>';
+            summaryHTML += '<li>Make sure both servers (admin panel on 8000, restaurant panel on 8001) are running</li>';
+            summaryHTML += '</ul>';
+            
+            summaryDiv.innerHTML = summaryHTML;
+        }
+
+        // Update summary when tests are run
+        setInterval(updateSummary, 1000);
+    </script>
+</body>
+</html>
