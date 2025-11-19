@@ -60,6 +60,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'two_factor_enabled' => 'boolean',
         'wallet_amount' => 'float',
+        'shippingAddress' => 'array',
+        'subscription_plan' => 'array',
+        'userBankDetails' => 'array',
     ];
 
     public function getvendorId()

@@ -1,7 +1,11 @@
 @php
     $currentLocale = str_replace('_', '-', app()->getLocale());
     $isRtl = $currentLocale === 'ar' || session('is_rtl') === true;
-    $branding = $layoutBranding ?? [];
+    $layoutBranding = $layoutBranding ?? [];
+    $layoutVendor = $layoutVendor ?? null;
+    $layoutUser = $layoutUser ?? auth()->user();
+
+    $branding = $layoutBranding;
     $appName = $branding['applicationName'] ?? config('app.name', 'Restaurant Management System');
     $logoUrl = $branding['appLogo'] ?? asset('/images/logo_web.png');
     $faviconUrl = $branding['favicon'] ?? asset('images/logo-light-icon.png');

@@ -3,6 +3,7 @@
 
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RestaurantProfileController;
 
 
 
@@ -188,7 +189,8 @@ Route::middleware(['check.subscription'])->group(function () {
 
     Route::get('/users/profile', [App\Http\Controllers\UserController::class, 'profile'])->name('user.profile');
 
-    Route::get('/restaurant', [App\Http\Controllers\UserController::class, 'restaurant'])->name('restaurant');
+    Route::get('/restaurant', [RestaurantProfileController::class, 'show'])->name('restaurant');
+    Route::post('/restaurant', [RestaurantProfileController::class, 'update'])->name('restaurant.update');
 
     Route::get('/foods', [App\Http\Controllers\FoodController::class, 'index'])->name('foods');
 
